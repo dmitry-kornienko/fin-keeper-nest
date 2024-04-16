@@ -14,6 +14,13 @@ export class User {
 
     @Prop({ required: true, unique: false })
     password: string;
+    
+    @Prop({ default: false })
+    isActivated: boolean;
+
+    @Prop()
+    activationLink: string;
+
 
     @Prop({ default: "" })
     tokenWB: string;
