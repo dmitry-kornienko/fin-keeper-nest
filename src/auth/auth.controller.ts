@@ -9,7 +9,7 @@ export class AuthController {
     constructor(private authService: AuthService) {}
 
     @Post('/login')
-    login(@Body() userDto: CreateUserDto) {
+    async login(@Body() userDto: CreateUserDto) {
         return this.authService.login(userDto);
     }
 
@@ -22,13 +22,8 @@ export class AuthController {
         return res.status(201).json(registrationData);
     }
 
-    @Get('/activate/:link')
-    activate() {
-        
-    }
-
     @Get('/refresh')
-    refresh() {
+    async refresh() {
         
     }
 }

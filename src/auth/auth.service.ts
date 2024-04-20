@@ -57,9 +57,7 @@ export class AuthService {
 
     }
 
-    async activate() {
-        
-    }
+    
 
     // private async generateToken(user: User) {
     //     const payload = { id: user._id, email: user.email };
