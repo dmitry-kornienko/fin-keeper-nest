@@ -13,7 +13,7 @@ import { TokensModule } from './tokens/tokens.module';
         MongooseModule.forRoot(process.env.DATA_BASE_URL),
         UsersModule,
         AuthModule,
-        TokensModule
+        TokensModule,
     ],
     controllers: [],
     providers: []

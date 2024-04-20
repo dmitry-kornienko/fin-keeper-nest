@@ -1,6 +1,7 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { AuthService } from './auth.service';
+import { Request, Response } from 'express';
 
 @Controller('auth')
 export class AuthController {
@@ -13,7 +14,21 @@ export class AuthController {
     }
 
     @Post('/registration')
-    registration(@Body() userDto: CreateUserDto) {
-        return this.authService.registration(userDto)
+    async registration(@Body() userDto: CreateUserDto, @Res() res: Response, @Req() req: Request) {
+        const registrationData = await this.authService.registration(userDto);
+
+        res.cookie("refreshToken", registrationData.refreshToken, { maxAge: 30 * 24 * 60 * 60 * 100, httpOnly: true });
+
+        return res.status(201).json(registrationData);
+    }
+
+    @Get('/activate/:link')
+    activate() {
+        
+    }
+
+    @Get('/refresh')
+    refresh() {
+        
     }
 }
