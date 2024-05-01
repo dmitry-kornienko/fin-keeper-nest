@@ -13,7 +13,7 @@ export class TokensService {
     ) {}
 
     async generateTokens(payload: UserTokenDto) {
-        const accessToken = this.jwtService.sign(payload, { expiresIn: "30s", secret: process.env.JWT_ACCESS_SECRET });
+        const accessToken = this.jwtService.sign(payload, { expiresIn: "30m", secret: process.env.JWT_ACCESS_SECRET });
         const refreshToken = this.jwtService.sign(payload, { expiresIn: "30d", secret: process.env.JWT_REFRESH_SECRET });
 
         return {

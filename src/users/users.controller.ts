@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, Req, Res, UseGuards } from '@nestjs/common';
 import { Response } from 'express';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
@@ -12,12 +12,6 @@ export class UsersController {
     @Get()
     getAll() {
         return this.userService.getAllUsers();
-    }
-
-    @UseGuards(JwtAuthGuard)
-    @Get("/current")
-    current(@Body() id: string) {
-        return this.userService.getUserById(id)
     }
 
     @Get('/activate/:link')

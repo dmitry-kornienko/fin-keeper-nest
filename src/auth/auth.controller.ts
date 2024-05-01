@@ -1,7 +1,8 @@
-import { Body, Controller, Get, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Request, Response } from 'express';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { AuthService } from './auth.service';
-import { Request, Response } from 'express';
+import { JwtAuthGuard } from './jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
@@ -43,5 +44,11 @@ export class AuthController {
         res.cookie("refreshToken", refreshData.refreshToken, { maxAge: 30 * 24 * 60 * 60 * 100, httpOnly: true });
 
         return res.status(201).json(refreshData);
+    }
+
+    @UseGuards(JwtAuthGuard)
+    @Get("/current")
+    current(@Req() req) {
+        return this.authService.current(req.user.id);
     }
 }

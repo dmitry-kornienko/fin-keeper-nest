@@ -1,12 +1,11 @@
 import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from "bcryptjs";
 import { randomUUID } from 'crypto';
+import { JwtService } from '@nestjs/jwt';
 import { UsersService } from 'src/users/users.service';
 import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import { TokensService } from 'src/tokens/tokens.service';
 import { UserTokenDto } from 'src/users/dto/user-token.dto';
-import { User } from 'src/users/user.schema';
-import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
@@ -85,9 +84,22 @@ export class AuthService {
         }
     }
 
-    private async generateToken(user: User) {
-        const payload = { id: user._id, email: user.email };
-        return this.jwtService.sign(payload)
+    async current(id: string) {
+        const user = await this.userService.getUserById(id);
+
+        if (!user) {
+            throw new UnauthorizedException({ message: "Неавторизован" });
+        }
+
+        const userTokenDto = new UserTokenDto(user);
+        const tokens = await this.tokenService.generateTokens({ ...userTokenDto });
+
+        await this.tokenService.saveToken(user._id, tokens.refreshToken)
+
+        return {
+            ...tokens,
+            user
+        }
     }
 
     private async validateUser(userDto: CreateUserDto) {
