@@ -8,12 +8,12 @@ import { CreateGoodDto } from "./dto/create-good.dto";
 export class GoodsService {
     constructor(@InjectModel(Good.name) private goodModel: Model<Good>) {}
 
-    createGood(goodDto: CreateGoodDto): Promise<Good> {
+    async createGood(goodDto: CreateGoodDto): Promise<Good> {
         const newGood = new this.goodModel(goodDto);
         return newGood.save();
     }
 
-    getUserGoods(userId: Schema.Types.ObjectId): Promise<Good[]> {
-        return this.goodModel.find({ user: userId });
+    async getUserGoods(userId: Schema.Types.ObjectId): Promise<Good[]> {
+        return await this.goodModel.find({ user: userId });
     }
 }
