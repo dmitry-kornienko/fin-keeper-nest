@@ -3,6 +3,7 @@ import { Model, Schema } from "mongoose";
 import { Good } from "./good.shema";
 import { InjectModel } from "@nestjs/mongoose";
 import { CreateGoodDto } from "./dto/create-good.dto";
+import { UpdateGoodCostPriceData } from "./goods.controller";
 
 @Injectable()
 export class GoodsService {
@@ -17,7 +18,9 @@ export class GoodsService {
         return newGood.save();
     }
 
-    async updateCostPrice(id: Schema.Types.ObjectId, newCostPrice: number) {
-        return this.goodModel.findOneAndUpdate({ _id: id }, { $set: { cost_price: newCostPrice } });
+    async updateCostPrice(data: UpdateGoodCostPriceData[]) {
+        for (const item of data) {
+            await this.goodModel.findOneAndUpdate({ _id: item.id }, { $set: { cost_price: item.cost_price } } );
+        }
     }
 }

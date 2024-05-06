@@ -8,6 +8,7 @@ import { CreateReportDto } from './dto/create-report.dto';
 import { GoodsService } from 'src/goods/goods.service';
 import { User } from 'src/users/user.schema';
 import { UpdateReportCostPriceData } from './reports.controller';
+import { UserTokenDto } from 'src/users/dto/user-token.dto';
 
 interface FetchReportRequest {
     method: string;
@@ -168,6 +169,11 @@ export class ReportsService {
     
         await this.reportModel.bulkWrite(updates);
     }
+
+    // async addThroughExcel(file: Express.Multer.File, dateFrom: string, dateTo: string, realizationreport_id: number, userId: Schema.Types.ObjectId) {
+    //     console.log(file)
+    //     return null
+    // }
 
     private async getReportById(id: number) {
         return await this.reportModel.findOne({ realizationreport_id: id });
