@@ -7,6 +7,7 @@ import { Good } from 'src/goods/good.shema';
 import { CreateReportDto } from './dto/create-report.dto';
 import { GoodsService } from 'src/goods/goods.service';
 import { User } from 'src/users/user.schema';
+import { UpdateReportCostPriceData } from './reports.controller';
 
 interface FetchReportRequest {
     method: string;
@@ -132,6 +133,40 @@ export class ReportsService {
         } catch (error) {
             throw new HttpException(error.message, HttpStatus.BAD_REQUEST)
         }
+    }
+
+    async getAllUserReports(userId: Schema.Types.ObjectId): Promise<Report[]> {
+        return this.reportModel.find({ user: userId });
+    }
+
+    async getOneReport(id: Schema.Types.ObjectId): Promise<Report> {
+        return this.reportModel.findOne({ _id: id });
+    }
+
+    async deleteOneReport(id: Schema.Types.ObjectId) {
+        const deletedData = this.reportModel.findOneAndDelete({ _id: id });
+
+        if (!deletedData) {
+            throw new HttpException("Отчет не найден", HttpStatus.BAD_REQUEST)
+        }
+    }
+
+    async updateCostPrice(reportId: Schema.Types.ObjectId, data: UpdateReportCostPriceData[]) {
+
+        const report = await this.reportModel.findOne({  _id: reportId});
+
+        if (!report) {
+            throw new HttpException("Отчет не найден", HttpStatus.BAD_REQUEST);
+        }
+
+        const updates = data.map(i => ({
+            updateOne: {
+                filter: { 'composition.article': i.article },
+                update: { $set: { 'composition.$.cost_price': i.cost_price } }
+            }
+        }));
+    
+        await this.reportModel.bulkWrite(updates);
     }
 
     private async getReportById(id: number) {
