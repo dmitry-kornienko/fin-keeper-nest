@@ -1,11 +1,9 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, Res, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { Schema } from 'mongoose';
 import { CreateReportDto } from './dto/create-report.dto';
 import { ReportsService } from './reports.service';
 import { AuthenticatedRequest } from 'src/goods/goods.controller';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { UserTokenDto } from 'src/users/dto/user-token.dto';
 
 export interface UpdateReportCostPriceData {
     article: string,

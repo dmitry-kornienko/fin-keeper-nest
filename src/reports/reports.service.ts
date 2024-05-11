@@ -8,7 +8,6 @@ import { CreateReportDto } from './dto/create-report.dto';
 import { GoodsService } from 'src/goods/goods.service';
 import { User } from 'src/users/user.schema';
 import { UpdateReportCostPriceData } from './reports.controller';
-import { UserTokenDto } from 'src/users/dto/user-token.dto';
 
 interface FetchReportRequest {
     method: string;
@@ -145,7 +144,7 @@ export class ReportsService {
     }
 
     async deleteOneReport(id: Schema.Types.ObjectId) {
-        const deletedData = this.reportModel.findOneAndDelete({ _id: id });
+        const deletedData = await this.reportModel.findOneAndDelete({ _id: id });
 
         if (!deletedData) {
             throw new HttpException("Отчет не найден", HttpStatus.BAD_REQUEST)
@@ -356,7 +355,7 @@ export class ReportsService {
                 report.delivery_return_count += row.return_amount; // 032
             }
             report.delivery_sum += row.delivery_rub; // 033
-            if (row.supplier_oper_name == "штрафы") {
+            if (row.supplier_oper_name == "штраф") {
                 report.penalty += row.penalty; // 035
             }
             if (row.supplier_oper_name == "доплаты") {
