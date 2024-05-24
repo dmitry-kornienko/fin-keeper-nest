@@ -1,7 +1,8 @@
-import { HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
+import { BadRequestException, HttpException, HttpStatus, Injectable, UnauthorizedException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Schema } from 'mongoose';
 import axios from 'axios';
+import * as xlsx from 'xlsx';
 import { Report } from './report.schema';
 import { Good } from 'src/goods/good.shema';
 import { CreateReportDto } from './dto/create-report.dto';
@@ -169,10 +170,58 @@ export class ReportsService {
         await this.reportModel.bulkWrite(updates);
     }
 
-    // async addThroughExcel(file: Express.Multer.File, dateFrom: string, dateTo: string, realizationreport_id: number, userId: Schema.Types.ObjectId) {
-    //     console.log(file)
-    //     return null
-    // }
+    async addThroughExcel(buffer: Buffer, dateFrom: string, dateTo: string, realizationreport_id: string, userId: Schema.Types.ObjectId) {
+        
+        if (!buffer || !dateFrom || !dateTo || !realizationreport_id) {
+            throw new BadRequestException('Пожалуйста, укажите все данные отчета');
+        }
+        
+        const user = await this.userModel.findOne({ _id: userId });
+
+        if (!user) {
+            throw new UnauthorizedException({ message: "Пользователь не найден" });
+        }
+
+        if (user.bill <= 0) {
+            throw new HttpException('Не достаточно средств на балансе', HttpStatus.BAD_REQUEST);
+        }
+
+        const workbook = xlsx.read(buffer, { type: 'buffer' });
+        const firstSheetName = workbook.SheetNames[0];
+        const firstSheet = workbook.Sheets[firstSheetName];
+        const data: unknown[][] = xlsx.utils.sheet_to_json(firstSheet, { header: 1 });
+
+        if (data.length === 0) {
+            throw new BadRequestException('Пустой файл Excel');
+        }
+
+        const columns = data[0] as string[];
+        const rows = data.slice(1) as unknown[][];
+
+        const objectsArray = rows.map(row => {
+            const obj: { [key: string]: any } = {};
+            columns.forEach((column, index) => {
+                obj[column] = row[index];
+            });
+            return obj;
+        });
+
+        const detalization = this.getDataForExcelAddingReport({ arr: objectsArray, dateFrom: dateFrom, dateTo: dateTo, realizationreport_id: realizationreport_id })
+
+        const goods = await this.goodModel.find({ user });
+
+        const report = await this.getReport(detalization, dateFrom, dateTo, goods, user);
+            
+        const addedReport = await this.getReportById(report.realizationreport_id);
+
+        if (addedReport) {
+            throw new HttpException('Отчет с таким номер уже существует', HttpStatus.BAD_REQUEST)
+        }
+
+        const newReport = new this.reportModel(report);
+        await this.userModel.findOneAndUpdate({ _id: userId }, { $inc: { bill: -1 } });
+        return newReport.save();
+    }
 
     private async getReportById(id: number) {
         return await this.reportModel.findOne({ realizationreport_id: id });
@@ -188,6 +237,31 @@ export class ReportsService {
             sa_name: item.sa_name.toLocaleLowerCase(),
         }))
         return transformedData;
+    }
+
+    private getDataForExcelAddingReport(data : any) {
+        const detalizationArr = data.arr.map(row => ({
+            realizationreport_id: data.realizationreport_id,
+            date_from: data.dateFrom,
+            date_to: data.dateTo,
+            sa_name: row["Артикул поставщика"],
+            doc_type_name: row["Тип документа"].toLowerCase(),
+            quantity: row["Кол-во"],
+            retail_amount: row["Вайлдберриз реализовал Товар (Пр)"],
+            supplier_oper_name: row["Обоснование для оплаты"].toLowerCase(),
+            retail_price_withdisc_rub: row["Цена розничная с учетом согласованной скидки"],
+            delivery_amount: row["Количество доставок"],
+            return_amount: row["Количество возврата"],
+            delivery_rub: row["Услуги по доставке товара покупателю"],
+            ppvz_for_pay: row["К перечислению Продавцу за реализованный Товар"],
+            penalty: row["Общая сумма штрафов"],
+            additional_payment: row["Доплаты"],
+            storage_fee: row["Хранение"],
+            deduction: row["Удержания"],
+            acceptance: row["Платная приемка"]
+        }))
+    
+        return detalizationArr
     }
 
     private getRetailAmountOfArticle = (detalization: FetchResponse[], article: string): number => {
@@ -313,6 +387,7 @@ export class ReportsService {
                 report.return_sum_before_comission += row.retail_price_withdisc_rub; // 003
                 report.return_count_before_comission += row.quantity; // 004
                 report.return_sum_after_comission += row.ppvz_for_pay; // 006
+                report.sale -= row.retail_amount
             }
             if (row.supplier_oper_name == "оплата брака") {
                 report.scrap_payment_sum += row.ppvz_for_pay; // 009
