@@ -8,7 +8,10 @@ async function start() {
     const app = await NestFactory.create(AppModule);
     
     app.use(cookieParser());
-    app.enableCors();
+    app.enableCors({
+        origin: process.env.MAIN_CLIENT_URL,
+        credentials: true,
+    });
 
     await app.listen(PORT, () => console.log(`Server started on port = ${PORT}`));
 }
